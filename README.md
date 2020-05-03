@@ -10,16 +10,16 @@ If you require the latest version of usbip-win you'll have to build usbip-win yo
 Install git for Windows if you haven't already:
 > https://gitforwindows.org/
 
-
 Open git bash in the start menu and clone usbip-win:
-```
-$ git clone https://github.com/cezuni/usbip-win.git
-```
+`git clone https://github.com/cezuni/usbip-win.git`
 
 Follow the instructions to build usbip-win in README.md. You'll have to install Visual Studio (community and other SKU's work), the Windows SDK and the Windows Driver Kit. Install each one in the order that is given in the instructions and don't install more then 1 thing at a time or the Windows SDK or Windows Driver Kit will install in a broken state that took me hours to figure out.
 
-If you don't need the latest version you can get prebuilt versions located here:
+If you don't need the latest version you can:
+1. get prebuilt versions located here:
 > https://github.com/cezuni/usbip-win/releases
+2. download with [Chocolatey](https://chocolatey.org/docs/installation#install-with-powershellexe):
+* `choco install usbip --version=0.1.0`
 
 ## Adding USB support to WSL Linux
 
@@ -38,14 +38,10 @@ and deleting all entries. This will probably auto-refresh in the future with the
 Open Ubuntu in WSL by navigating to the start menu and opening Ubuntu
 
 Update sources:
-```
-~$ sudo apt update
-```
+* `sudo apt update`
 
 Install prerequisites to build Linux kernel:
-```
-~$ sudo apt install build-essential flex bison libssl-dev libelf-dev libncurses-dev autoconf libudev-dev libtool
-````
+* `sudo apt install build-essential flex bison libssl-dev libelf-dev libncurses-dev autoconf libudev-dev libtool`
 
 Find out the name of your Linux kernel:
 ```
@@ -60,9 +56,7 @@ Clone the WSL 2 kernel. Typically kernel source is put in /usr/src/[kernel name]
 ```
 
 Checkout your version of the kernel:
-```
-/usr/src/4.19.43-microsoft-standard$ sudo git checkout v4.19.43
-```
+* `/usr/src/4.19.43-microsoft-standard$ sudo git checkout v4.19.43`
 
 Copy in your current kernel configuration:
 ```
@@ -72,9 +66,7 @@ Copy in your current kernel configuration:
 ```
 
 Run menuconfig to select what kernel modules you'd like to add:
-```
-/usr/src/4.19.43-microsoft-standard$ sudo make menuconfig
-```
+* `/usr/src/4.19.43-microsoft-standard$ sudo make menuconfig`
 
 Navigate in menuconfig to select the USB kernel modules you'd like. These suited my needs but add more or less as you see fit:
 ```
@@ -98,9 +90,7 @@ Device Drivers->Network device support->USB Network Adapters->Multi-purpose USB 
 ```
 
 Build the kernel and modules with as many cores as you have available (-j [number of cores]). This may take a few minutes depending how fast your machine is:
-```
-/usr/src/4.19.43-microsoft-standard$ sudo make -j 12 && sudo make modules_install -j 12 && sudo make install -j 12
-```
+* `/usr/src/4.19.43-microsoft-standard$ sudo make -j 12 && sudo make modules_install -j 12 && sudo make install -j 12`
 
 After the build completes you'll get a list of what kernel modules have been installed. Mine looks like:
 ```
@@ -132,11 +122,9 @@ Build USBIP tools:
 ```
 
 Copy USBIP tools libraries to location that USBIP tools can get to them:
-```
-/usr/src/4.19.43-microsoft-standard/tools/usb/usbip$ sudo cp libsrc/.libs/libusbip.so.0 /lib/libusbip.so.0
-````
+* `/usr/src/4.19.43-microsoft-standard/tools/usb/usbip$ sudo cp libsrc/.libs/libusbip.so.0 /lib/libusbip.so.0`
 
-Make a script in your home directory to modprobe in all the drivers. Be sure to modprobe in usbcore and usb-common first. I called mine startusb.sh. Mine looks like:
+Make a script in your home directory to modprobe in all the drivers. Be sure to modprobe in usbcore and usb-common first. I called mine `$HOME/scripts/startusb.sh`. Mine looks like:
 ```
 #!/bin/bash
 sudo modprobe usbcore
@@ -158,58 +146,46 @@ The last line spits out the IP address of the Windows host. Helpful when you are
 If you see some crap about /bin/bash^M: bad interpreter: No such file or directory it's because you have cr+lf line endings. You need to convert your shellscript to just lf.
 
 Mark it as executable:
-```
-~$ sudo chmod +x startusb.sh
-```
+* `sudo chmod +x $HOME/scripts/startusb.sh`
 
 Restart WSL. In a CMD window in Windows type:
-```
-C:\Users\rpasek>wsl --shutdown
-```
+* `wsl --shutdown`
 
 Open WSL again by going to start menu and opening Ubuntu and run your script:
-```
-~$ ./startusb.sh
-```
+* `sudo $HOME/scripts/startusb.sh`
 
 Check in dmesg that all your USB drivers got loaded:
-```
-~$ sudo dmesg
-````
+* `sudo dmesg`
 
 If so, cool, you've added USB support to WSL. 
 
 ## Using USBIP-Win and USBIP on Linux
 
-This will generate a list of usb devices attached to Windows:
-```
-C:\Users\rpasek\usbip-win-driver>usbip list -l
-```
+### Windows
+Note: This step assumes [Windows Terminal](https://chocolatey.org/packages/microsoft-windows-terminal)
+* `choco install microsoft-windows-terminal`
 
-The busid of the device I want to bind to is 1-220. Bind to it with: 
-```
-C:\Users\rpasek\usbip-win-driver>usbip bind --busid=1-220
-```
+Open windows admin terminal:
+* `powershell start -verb runas -argumentlist '-d .' wt`
+
+This will generate a list of usb devices attached to Windows: `usbip list -l`, E.g: 
+* `usbip list -l | wsl.exe grep -B1 'Cambridge Silicon Radio'`
+
+The busid of the device I want to bind to is `1-1`. Bind to it with: 
+* `usbip bind --busid=1-1`
 
 Now start the usbip daemon. I start in debug mode to see more messages:
-```
-C:\Users\rpasek\usbip-win-driver>usbipd --debug
-```
+* `usbipd.exe --debug`
 
+### Linux (be sure that `sudo $HOME/scripts/startusb.sh` was run)
 Now on Linux get a list of availabile USB devices:
-```
-~$ sudo usbip list --remote=172.30.64.1
-```
+* `sudo usbip list --remote=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}')`
 
-The busid of the device I want to attach to is 1-220. Attach to it with:
-```
-~$ sudo usbip attach --remote=172.30.64.1 --busid=1-220
-```
+The busid of the device I want to attach to is `1-1`. Attach to it with:
+* `sudo usbip attach --remote=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}') --busid=1-1`
 
 Your USB device should be usable now in Linux. Check dmesg to make sure everything worked correctly:
-```
-~$ sudo dmesg
-```
+* `sudo dmesg`
 
 ## Couple of tips
 
