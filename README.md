@@ -51,12 +51,12 @@ Find out the name of your Linux kernel:
 
 Clone the WSL 2 kernel. Typically kernel source is put in /usr/src/[kernel name]:
 ```
-~$ sudo git clone https://github.com/microsoft/WSL2-Linux-Kernel.git /usr/src/4.19.43-microsoft-standard
-~$ cd /usr/src/4.19.43-microsoft-standard
+~$ sudo git clone https://github.com/microsoft/WSL2-Linux-Kernel.git /usr/src/$(uname -r)
+~$ cd /usr/src/$(uname -r)
 ```
 
 Checkout your version of the kernel:
-* `/usr/src/4.19.43-microsoft-standard$ sudo git checkout v4.19.43`
+* `/usr/src/$(uname -r)$ sudo git checkout v4.19.43`
 
 Copy in your current kernel configuration:
 ```
@@ -66,7 +66,7 @@ Copy in your current kernel configuration:
 ```
 
 Run menuconfig to select what kernel modules you'd like to add:
-* `/usr/src/4.19.43-microsoft-standard$ sudo make menuconfig`
+* `/usr/src/$(uname -r)$ sudo make menuconfig`
 
 Navigate in menuconfig to select the USB kernel modules you'd like. These suited my needs but add more or less as you see fit:
 ```
