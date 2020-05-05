@@ -46,7 +46,7 @@ Install prerequisites to build Linux kernel:
 Find out the name of your Linux kernel:
 ```
 ~$ uname -r
-4.19.43-microsoft-standard
+4.19.84-microsoft-standard
 ```
 
 Clone the WSL 2 kernel. Typically kernel source is put in /usr/src/[kernel name]:
@@ -56,17 +56,19 @@ Clone the WSL 2 kernel. Typically kernel source is put in /usr/src/[kernel name]
 ```
 
 Checkout your version of the kernel:
-* `/usr/src/$(uname -r)$ sudo git checkout v4.19.43`
+```
+/usr/src/4.19.84-microsoft-standard$ sudo git checkout v$(echo `uname -r` | cut -d'-' -f 1)
+```
 
 Copy in your current kernel configuration:
 ```
-/usr/src/4.19.43-microsoft-standard$ sudo cp /proc/config.gz config.gz
-/usr/src/4.19.43-microsoft-standard$ sudo gunzip config.gz
-/usr/src/4.19.43-microsoft-standard$ sudo mv config .config
+/usr/src/4.19.84-microsoft-standard$ sudo cp /proc/config.gz config.gz
+/usr/src/4.19.84-microsoft-standard$ sudo gunzip config.gz
+/usr/src/4.19.84-microsoft-standard$ sudo mv config .config
 ```
 
 Run menuconfig to select what kernel modules you'd like to add:
-* `/usr/src/$(uname -r)$ sudo make menuconfig`
+* `/usr/src/4.19.84-microsoft-standard$ sudo make menuconfig`
 
 Navigate in menuconfig to select the USB kernel modules you'd like. These suited my needs but add more or less as you see fit:
 ```
@@ -90,7 +92,7 @@ Device Drivers->Network device support->USB Network Adapters->Multi-purpose USB 
 ```
 
 Build the kernel and modules with as many cores as you have available (-j [number of cores]). This may take a few minutes depending how fast your machine is:
-* `/usr/src/4.19.43-microsoft-standard$ sudo make -j 12 && sudo make modules_install -j 12 && sudo make install -j 12`
+* `/usr/src/4.19.84-microsoft-standard$ sudo make -j 12 && sudo make modules_install -j 12 && sudo make install -j 12`
 
 After the build completes you'll get a list of what kernel modules have been installed. Mine looks like:
 ```
@@ -110,19 +112,19 @@ After the build completes you'll get a list of what kernel modules have been ins
   INSTALL drivers/usb/storage/usb-storage.ko
   INSTALL drivers/usb/usbip/usbip-core.ko
   INSTALL drivers/usb/usbip/vhci-hcd.ko
-  DEPMOD  4.19.43-microsoft-standard
+  DEPMOD  4.19.84-microsoft-standard
 ```
 
 Build USBIP tools:
 ```
-/usr/src/4.19.43-microsoft-standard$ cd tools/usb/usbip
-/usr/src/4.19.43-microsoft-standard/tools/usb/usbip$ sudo ./autogen.sh
-/usr/src/4.19.43-microsoft-standard/tools/usb/usbip$ sudo ./configure
-/usr/src/4.19.43-microsoft-standard/tools/usb/usbip$ sudo make install -j 12
+/usr/src/4.19.84-microsoft-standard$ cd tools/usb/usbip
+/usr/src/4.19.84-microsoft-standard/tools/usb/usbip$ sudo ./autogen.sh
+/usr/src/4.19.84-microsoft-standard/tools/usb/usbip$ sudo ./configure
+/usr/src/4.19.84-microsoft-standard/tools/usb/usbip$ sudo make install -j 12
 ```
 
 Copy USBIP tools libraries to location that USBIP tools can get to them:
-* `/usr/src/4.19.43-microsoft-standard/tools/usb/usbip$ sudo cp libsrc/.libs/libusbip.so.0 /lib/libusbip.so.0`
+* `/usr/src/4.19.84-microsoft-standard/tools/usb/usbip$ sudo cp libsrc/.libs/libusbip.so.0 /lib/libusbip.so.0`
 
 Make a script in your home directory to modprobe in all the drivers. Be sure to modprobe in usbcore and usb-common first. I called mine `$HOME/scripts/startusb.sh`. Mine looks like:
 ```
