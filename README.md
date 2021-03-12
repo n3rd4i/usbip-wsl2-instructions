@@ -173,17 +173,29 @@ Open windows admin terminal:
 This will generate a list of usb devices attached to Windows: `usbip list -l`, E.g: 
 * `usbip list -l | wsl.exe grep -B1 'Cambridge Silicon Radio'`
 
+#### Environment-way
+* check `BT1BUSID`: `set BT1BUSID`
+  * `setx BT1BUSID 1-1` && `refreshenv`
+* check `WSLENV` [cmd.exe]: `set WSLENV`
+  * `setx WSLENV "%WSLENV%:BT1BUSID"` && `refreshenv`
+
+#### Manually
 The busid of the device I want to bind to is `1-1`. Bind to it with: 
+* `usbip bind --busid=%BT1BUSID%`
 * `usbip bind --busid=1-1`
 
 Now start the usbip daemon. I start in debug mode to see more messages:
 * `usbipd.exe --debug`
 
 ### Linux (be sure that `sudo $HOME/scripts/startusb.sh` was run)
+Start-up WSL2 session:
+* `wsl -d Ubuntu-20.04`
+
 Now on Linux get a list of availabile USB devices:
 * `sudo usbip list --remote=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}')`
 
 The busid of the device I want to attach to is `1-1`. Attach to it with:
+* `sudo usbip attach --remote=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}') --busid=$BT1BUSID`
 * `sudo usbip attach --remote=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}') --busid=1-1`
 
 Your USB device should be usable now in Linux. Check dmesg to make sure everything worked correctly:
